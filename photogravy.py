@@ -13,13 +13,24 @@ logger = logging.getLogger('Main')
 logger.setLevel(logging.WARNING)
 
 @click.command()
-@click.option('--directory', default='./', help='Image directory')
+@click.option('--directory', default='./', help='Image directory', type=click.Path(exists=True))
 @click.option('--verbose', is_flag=True, help='Show logs')
 @click.option('--force', is_flag=True, help='Force exif extraction (even if exists)')
-@click.option('--test-run', is_flag=True, help='Do all checks but do not write changes to the directory.')
+@click.option('--test-run', is_flag=True, help='Do all checks but do not write changes to the directory (except if .exif missing).')
 def main(directory:str, test_run:bool, verbose:bool, force:bool):
   """
-  CLI entry point
+  Photogravy - A Photography Sanitation Tool by Arthur Van de Wiele
+
+  Avoid getting overwhelmed with your photographs and keep your archives
+  clean(er) by automatically renaming images (RAW, jpegs, etc...) and
+  their sidecar with a datetime format, (re)setting the artist name and
+  so on. Also create a dedicated .exif file (simple json text file) to
+  have easy access to the metadata of an image.
+
+  Examples:
+  python photogravy.py --directory /my/new/images/folder --test-run --verbose
+  or
+  python photogravy.py --directory /my/new/images/folder --force
   """
 
   if verbose:
