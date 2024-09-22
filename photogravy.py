@@ -73,12 +73,12 @@ def sanitize(images:dict, artist:str = None, lens:str = None, test_run:bool = Tr
     logger.info(f'  ⨽ Default Artist name loaded from configuration: `{artist}`.')
 
   for id, key in enumerate(images.keys()):
-    logger.info(f'Sanitizing registry `{key}`.')
+    logger.info(f'Sanitizing registry `{key}`. Progress {id} of {len(images)}')
                     
-    refresh_exif(images, key, test_run, verbose=verbose, force = force)
-    sanitize_author(images, key, artist, test_run, verbose=verbose, force = force)
-    sanitize_lens_documentation(images, key, lens, test_run, verbose=verbose, force = force)
-    refresh_exif(images, key, test_run, verbose=verbose, force = force)
+    refresh_exif(images, key, test_run, verbose=verbose, force = True)
+    sanitize_author(images, key, artist, test_run=test_run, verbose=verbose, force = force)
+    sanitize_lens_documentation(images, key, lens, test_run=test_run, verbose=verbose, force = force)
+    refresh_exif(images, key, test_run=test_run, verbose=verbose, force = True)
     sanitize_filenames(images, key, test_run, verbose=verbose)
 
   return images

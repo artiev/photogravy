@@ -45,7 +45,7 @@ def generate_exif_file(images, key, test_run:bool = False, verbose:bool = False,
   logger.debug(f'  ⨽ Unpacking EXIF from `{key}` and generating exif file.')
   if not os.path.exists(path) or force:
       if force:
-        logger.debug(f'  ⨽ Exif data `{path}` will be overwritten (--force).')
+        logger.debug(f'  ⨽ Exif data `{path}` will be overwritten.')
       else:
         logger.debug(f'  ⨽ Exif data `{path}` is missing. Creating.')
       with open(path, 'w') as exif_file:
