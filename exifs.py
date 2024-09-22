@@ -66,12 +66,13 @@ def load_exif_from_file(path:str, verbose:bool = False) -> dict:
   logger.debug(f'  ⨽ Loading EXIF data from `{path}`.')
   output = dict()
 
-  path = os.path.relpath(os.path.normpath(os.path.join("/", path)), "/")
+  path = os.path.abspath(path)
 
   try:
     with open(path, 'r') as json_file:
       output = json.load(json_file)[0]
-  except:
-    logger.error(f'Corrupted `{path}` file.')
+  except Exception as msg:
+    logger.error(f'  ⨽ Corrupted `{path}` file.')
+    logger.debug(f'  ⨽ {msg}')
 
   return output

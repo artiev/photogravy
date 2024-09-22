@@ -8,33 +8,107 @@ import subprocess
 
 from datetime import datetime
 
-from configs import artist_name
+from configs import lens_configurations
 from exifs import refresh_exif
 
 logger = logging.getLogger('Sanitizers')
 logger.setLevel(logging.WARNING)
 
-def sanitize_author( images:dict, key:str, test_run:bool = True, verbose:bool = False) -> dict:
+def sanitize_author( images:dict, key:str, artist:str=None, test_run:bool = True, verbose:bool = False, force:bool = False) -> dict:
   """
-  If the Artist information is not what is defined in configs.py, it will be overwritten.
+  If the Artist information is not what is defined in configs.py or what was given in the command call --artist, it will be overwritten.
   """
 
   if verbose:
     logger.setLevel(logging.DEBUG)
 
-  logger.info(f"  ⨽ Validating author/artist information.")
+  logger.debug('  ⨽ Validating author/artist information.')
+  logger.debug(f"  ⨽ Author of `{images[key]['image']['filename']}` is `{images[key]['exif']['data'].get('Artist', 'undef')}`")
 
-  if images[key]['exif']['data'].get('Artist', '') != artist_name:
+  if not artist:
+    return images
 
-    logger.debug(f"  ⨽ Authoring `{images[key]['image']['filename']}` to {artist_name}.")
-    if not test_run:
-      subprocess.run(['exiftool', f'-artist={artist_name}', images[key]['image']['path']])
+  if images[key]['exif']['data'].get('Artist') != artist:
 
-    images[key]['exif']['data']['Artist'] = artist_name #todo clean
+    if not images[key]['exif']['data'].get('Artist') or force:
+      logger.debug(f"  ⨽ Authoring `{images[key]['image']['filename']}` to {artist}.")
+      
+      if not test_run:
+        subprocess.run(
+          [
+            'exiftool', 
+            f'-artist={artist}',
+            '-overwrite_original', 
+            images[key]['image']['path']
+          ],
+          stdout=subprocess.DEVNULL,
+          stderr=subprocess.STDOUT
+        )
+      else:
+        pass
 
-    refresh_exif(images, key, test_run)
+    else:
+      logger.debug(f"  ⨽ Lens data was left unchanged. Use --force is this was not intended.")
+  else:
+    pass
 
   return images
+
+def sanitize_lens_documentation( images:dict, key:str, lens:str=None, test_run:bool = True, verbose:bool = False, force:bool = False) -> dict:
+  """
+  If the lens information is not what is defined in configs.py, it will be overwritten.
+  """
+
+  if verbose:
+    logger.setLevel(logging.DEBUG)
+
+  logger.debug("  ⨽ Validating Lens information.")
+  old_make = images[key]['exif']['data'].get('LensMake')
+  old_model = images[key]['exif']['data'].get('LensModel')
+  
+  logger.debug(f"  ⨽ Lens information of `{images[key]['image']['filename']}` is `{old_make}`:`{old_model}`.")
+
+  if not lens:
+    return images
+  
+  if lens not in lens_configurations.keys():
+    logger.error(f'  ⨽ Lens configuration `{lens}` unknown. Ignoring.')
+    return images
+
+  if old_make != lens_configurations[lens].get('LensMake') and old_model != lens_configurations[lens].get('LensModel'):
+
+    if not (old_make and old_model) or force:
+      logger.debug(f"  ⨽ Setting lens data of `{images[key]['image']['filename']}` to {lens_configurations[lens].get('LensMake')}:{lens_configurations[lens].get('LensModel')}.")
+      if not test_run:
+        subprocess.run(
+          [
+            'exiftool', 
+            f"-LensMake={lens_configurations[lens].get('LensMake', '')}", 
+            f"-LensModel={lens_configurations[lens].get('LensModel', '')}", 
+            f"-LensInfo={lens_configurations[lens].get('LensInfo', '')}", 
+            f"-MinFocalLength={lens_configurations[lens].get('MinFocalLength', 0)}",
+            f"-MaxFocalLength={lens_configurations[lens].get('MaxFocalLength', 0)}",
+            f"-MaxApertureValue={lens_configurations[lens].get('MaxApertureValue', 0.0)}",
+            f"-MaxApertureAtMinFocal={lens_configurations[lens].get('MaxApertureAtMinFocal', 0.0)}",
+            f"-MaxApertureAtMaxFocal={lens_configurations[lens].get('MaxApertureAtMaxFocal', 0.0)}",
+            f"-FocalLengthIn35mmFormat={lens_configurations[lens].get('FocalLengthIn35mmFormat', '')}",
+            f"-LensSerialNumber={lens_configurations[lens].get('LensSerialNumber', '')}",
+            '-overwrite_original', 
+            images[key]['image']['path']
+          ],
+          stdout=subprocess.DEVNULL,
+          stderr=subprocess.STDOUT
+        )
+      else:
+        pass
+    else:
+      logger.debug(f"  ⨽ Lens data was left unchanged. Use --force is this was not intended.")
+  else:
+    pass
+
+
+  return images
+
 
 def sanitize_filenames( images:dict, key:str, test_run:bool = True, verbose:bool = False) -> dict:
   """
@@ -50,11 +124,11 @@ def sanitize_filenames( images:dict, key:str, test_run:bool = True, verbose:bool
   datetime_original = datetime.strptime(images[key]['exif']['data']['DateTimeOriginal'], '%Y:%m:%d %H:%M:%S')
   target_filename = datetime_original.strftime('%Y-%m-%d-%H%M%S')
 
-  logger.info(f"  ⨽ Validating name format.")
+  logger.debug(f"  ⨽ Validating name format.")
 
   if target_filename not in images[key]['image']['filename']:
 
-    logger.info(f"  ⨽ Name `{images[key]['image']['filename']}` does not conform to format. Renaming.")
+    logger.debug(f"  ⨽ Name `{images[key]['image']['filename']}` does not conform to format. Renaming.")
 
     final_extension = images[key]['image']['extension'].lower()
     final_filename = f'{target_filename}{final_extension}'
@@ -95,7 +169,7 @@ def sanitize_filenames( images:dict, key:str, test_run:bool = True, verbose:bool
       target_sidecar_filename = f"{images[key]['image']['filename']}{images[key]['sidecar']['extension']}"
       target_sidecar_path = os.path.relpath(os.path.join(images[key]['directory'], target_sidecar_filename))
 
-      logger.debug(f"→ Renaming sidecar file `{images[key]['sidecar']['filename']}` to `{target_sidecar_filename}`.")
+      logger.debug(f"  ⨽ Renaming sidecar file `{images[key]['sidecar']['filename']}` to `{target_sidecar_filename}`.")
       if not test_run:
         try:
           os.rename(images[key]['sidecar']['path'], target_sidecar_path)
