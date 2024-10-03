@@ -75,36 +75,32 @@ def sanitize_lens_documentation( images:dict, key:str, lens:str=None, test_run:b
     logger.error(f'  ⨽ Lens configuration `{lens}` unknown. Ignoring.')
     return images
 
-  if old_make != lens_configurations[lens].get('LensMake') and old_model != lens_configurations[lens].get('LensModel'):
-
-    if not (old_make and old_model) or force:
-      logger.debug(f"  ⨽ Setting lens data of `{images[key]['image']['filename']}` to {lens_configurations[lens].get('LensMake')}:{lens_configurations[lens].get('LensModel')}.")
-      if not test_run:
-        subprocess.run(
-          [
-            'exiftool', 
-            f"-LensMake={lens_configurations[lens].get('LensMake', '')}", 
-            f"-LensModel={lens_configurations[lens].get('LensModel', '')}", 
-            f"-LensInfo={lens_configurations[lens].get('LensInfo', '')}", 
-            f"-MinFocalLength={lens_configurations[lens].get('MinFocalLength', 0)}",
-            f"-MaxFocalLength={lens_configurations[lens].get('MaxFocalLength', 0)}",
-            f"-MaxApertureValue={lens_configurations[lens].get('MaxApertureValue', 0.0)}",
-            f"-MaxApertureAtMinFocal={lens_configurations[lens].get('MaxApertureAtMinFocal', 0.0)}",
-            f"-MaxApertureAtMaxFocal={lens_configurations[lens].get('MaxApertureAtMaxFocal', 0.0)}",
-            f"-FocalLengthIn35mmFormat={lens_configurations[lens].get('FocalLengthIn35mmFormat', '')}",
-            f"-LensSerialNumber={lens_configurations[lens].get('LensSerialNumber', '')}",
-            '-overwrite_original', 
-            images[key]['image']['path']
-          ],
-          stdout=subprocess.DEVNULL,
-          stderr=subprocess.STDOUT
-        )
-      else:
-        pass
+  if old_make != lens_configurations[lens].get('LensMake') or old_model != lens_configurations[lens].get('LensModel') or force:
+    logger.debug(f"  ⨽ Setting lens data of `{images[key]['image']['filename']}` to {lens_configurations[lens].get('LensMake')}:{lens_configurations[lens].get('LensModel')}.")
+    if not test_run:
+      subprocess.run(
+        [
+          'exiftool', 
+          f"-LensMake={lens_configurations[lens].get('LensMake', '')}", 
+          f"-LensModel={lens_configurations[lens].get('LensModel', '')}", 
+          f"-LensInfo={lens_configurations[lens].get('LensInfo', '')}", 
+          f"-MinFocalLength={lens_configurations[lens].get('MinFocalLength', 0)}",
+          f"-MaxFocalLength={lens_configurations[lens].get('MaxFocalLength', 0)}",
+          f"-MaxApertureValue={lens_configurations[lens].get('MaxApertureValue', 0.0)}",
+          f"-MaxApertureAtMinFocal={lens_configurations[lens].get('MaxApertureAtMinFocal', 0.0)}",
+          f"-MaxApertureAtMaxFocal={lens_configurations[lens].get('MaxApertureAtMaxFocal', 0.0)}",
+          f"-FocalLengthIn35mmFormat={lens_configurations[lens].get('FocalLengthIn35mmFormat', '')}",
+          f"-LensSerialNumber={lens_configurations[lens].get('LensSerialNumber', '')}",
+          '-overwrite_original', 
+          images[key]['image']['path']
+        ],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.STDOUT
+      )
     else:
-      logger.debug(f"  ⨽ Lens data was left unchanged. Use --force is this was not intended.")
+      pass
   else:
-    pass
+    logger.debug(f"  ⨽ Lens data was left unchanged.")
 
 
   return images
