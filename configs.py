@@ -42,5 +42,17 @@ lens_configurations = {
     'MaxApertureAtMaxFocal': 1.4,
     'FocalLengthIn35mmFormat': 35,
     'LensSerialNumber': ''
-  }
+  },
+  '7a-60-28-x':{
+    'LensMake': '7Artisan',
+    'LensModel': 'APS-C 60mm f/2.8 II Macro X-Mount',
+    'LensInfo': '60mm f/2.8',
+    'MinFocalLength': 60,
+    'MaxFocalLength': 60,
+    'MaxApertureValue': 2.8,
+    'MaxApertureAtMinFocal': 2.8,
+    'MaxApertureAtMaxFocal': 2.8,
+    'FocalLengthIn35mmFormat': 90,
+    'LensSerialNumber': '27897'
+  },
 }
